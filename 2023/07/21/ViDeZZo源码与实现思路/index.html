@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="纪念我的第二篇Blog，第一篇有我的idea就不放出来了。 纪念浙江大学玉泉校区曹主楼320的橙色暴雨预警的深夜。 给个书读吧求求了。——js 7.21  编译构建 编译命令：make qemu qemu-coverage  当前目录中的make videzzo-core  make videzzo-core  运行videzzo_types_gen.py videzzo_tool中的all（做">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ViDeZZo源码与实现思路">
+<meta property="og:url" content="http://example.com/2023/07/21/ViDeZZo%E6%BA%90%E7%A0%81%E4%B8%8E%E5%AE%9E%E7%8E%B0%E6%80%9D%E8%B7%AF/index.html">
+<meta property="og:site_name" content="届かない恋">
+<meta property="og:description" content="纪念我的第二篇Blog，第一篇有我的idea就不放出来了。 纪念浙江大学玉泉校区曹主楼320的橙色暴雨预警的深夜。 给个书读吧求求了。——js 7.21  编译构建 编译命令：make qemu qemu-coverage  当前目录中的make videzzo-core  make videzzo-core  运行videzzo_types_gen.py videzzo_tool中的all（做">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="c:\Users\jiangshao\AppData\Roaming\Typora\typora-user-images\image-20230721204119561.png">
+<meta property="og:image" content="c:\Users\jiangshao\AppData\Roaming\Typora\typora-user-images\image-20230721221541450.png">
+<meta property="og:image" content="c:\Users\jiangshao\AppData\Roaming\Typora\typora-user-images\image-20230721221548048.png">
+<meta property="og:image" content="c:\Users\jiangshao\AppData\Roaming\Typora\typora-user-images\image-20230721222012503.png">
+<meta property="og:image" content="c:\Users\jiangshao\AppData\Roaming\Typora\typora-user-images\image-20230721222633817.png">
+<meta property="og:image" content="c:\Users\jiangshao\AppData\Roaming\Typora\typora-user-images\image-20230721222309272.png">
+<meta property="article:published_time" content="2023-07-21T14:42:34.000Z">
+<meta property="article:modified_time" content="2023-07-21T14:43:07.308Z">
+<meta property="article:author" content="Shao Jiang">
+<meta property="article:tag" content="Virtual Device Fuzzing">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="c:\Users\jiangshao\AppData\Roaming\Typora\typora-user-images\image-20230721204119561.png">
+
+<link rel="canonical" href="http://example.com/2023/07/21/ViDeZZo%E6%BA%90%E7%A0%81%E4%B8%8E%E5%AE%9E%E7%8E%B0%E6%80%9D%E8%B7%AF/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>ViDeZZo源码与实现思路 | 届かない恋</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="届かない恋" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">届かない恋</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2023/07/21/ViDeZZo%E6%BA%90%E7%A0%81%E4%B8%8E%E5%AE%9E%E7%8E%B0%E6%80%9D%E8%B7%AF/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Shao Jiang">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="届かない恋">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          ViDeZZo源码与实现思路
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2023-07-21 22:42:34 / 修改时间：22:43:07" itemprop="dateCreated datePublished" datetime="2023-07-21T22:42:34+08:00">2023-07-21</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>纪念我的第二篇Blog，第一篇有我的idea就不放出来了。</p>
+<p>纪念浙江大学玉泉校区曹主楼320的橙色暴雨预警的深夜。</p>
+<p>给个书读吧求求了。——js 7.21</p>
+</blockquote>
+<h2 id="编译构建"><a href="#编译构建" class="headerlink" title="编译构建"></a>编译构建</h2><ol>
+<li>编译命令：make qemu qemu-coverage</li>
+</ol>
+<p>当前目录中的make videzzo-core</p>
+<ol start="2">
+<li>make videzzo-core</li>
+</ol>
+<p>运行videzzo_types_gen.py</p>
+<p>videzzo_tool中的all（做merge和产生PoC的，先忽略掉）</p>
+<p>编译videzzo.c和videzzo_types.c，打包成静态库</p>
+<ol start="3">
+<li>videzzo_qemu目录中的make qemu clusterfuzz还有qemu-coverage clusterfuzz-coverage</li>
+</ol>
+<p>qemu-dep安装依赖并且下载qemu；make patch。</p>
+<p>make patch：把patch脚本复制到qemu源码中并执行patch。这个patch看上去像是qtest框架的东西。</p>
+<p>make compile：</p>
+<p>执行copy脚本把当前目录下的videzzo_qemu.c以及videzzo_qemu_types.yaml以及之前编译好的库放到qemu源文件的qtest文件夹下。</p>
+<ol start="4">
+<li>cluster-fuzz</li>
+</ol>
+<p>这里抄的qemu的oss-fuzz，为的是不带参数直接运行对目标的fuzz文件。我感觉这么处理是为了满足OSS-Fuzz的要求。qemu-fuzzer的编译脚本有这么写：</p>
+<p><img src="C:\Users\jiangshao\AppData\Roaming\Typora\typora-user-images\image-20230721204119561.png" alt="image-20230721204119561"></p>
+<h2 id="QTest——QEMU自带单元测试框架"><a href="#QTest——QEMU自带单元测试框架" class="headerlink" title="QTest——QEMU自带单元测试框架"></a>QTest——QEMU自带单元测试框架</h2><p>为什么再一次看qtest，（上一次看没看下去），是因为ViDeZZo确实很难看懂。虽然author在paper中闪烁其词，我还是能看出来他们参考了很多Morphuzz的实现思路的，所以这里回来看一下qtest和qemufuzzer。</p>
+<h3 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h3><p><a target="_blank" rel="noopener" href="https://qemu.readthedocs.io/en/latest/devel/qtest.html">QTest Device Emulation Testing Framework — QEMU 8.0.0 documentation</a></p>
+<p>qtest用于对qemu虚拟设备进行单元测试。qtest本质上是一个库，源码在<code>tests/qtest/libqtest.c</code>，<code>tests/qtest/libqtest.h</code>中定义了可用的API。另外在libqtest上还有一个libqos，往往更常用（On top of libqtest, a higher level library, <code>libqos</code>, was created to encapsulate common tasks of device drivers, such as memory management and communicating with system buses or devices. 这个还能测driver？？ 这里值得研究）。</p>
+<h3 id="使用方式"><a href="#使用方式" class="headerlink" title="使用方式"></a>使用方式</h3><p>最基本的使用方式。</p>
+<p>需要自己用<code>glib and libqtest/libqos API</code>编写测试脚本放到tests&#x2F;qtest&#x2F; 下面，在<code>tests/qtest/meson.build</code>加入这个脚本的编译，在相关的架构变量下面加上测试用例。运行这个测试用例的方式为make check-qtest。</p>
+<p>理论上qtest框架只是包含上述的内容，当我想看一个例子：qemu&#x2F;tests&#x2F;qtest&#x2F;ac97-test.c的时候，我发现文档说的没错——基本上要用libqos。这里我们再看一下liboqs的相关文档。</p>
+<h3 id="Qtest-Driver-Framework"><a href="#Qtest-Driver-Framework" class="headerlink" title="Qtest Driver Framework"></a>Qtest Driver Framework</h3><p><a target="_blank" rel="noopener" href="https://qemu.readthedocs.io/en/latest/devel/qgraph.html#">Qtest Driver Framework — QEMU 8.0.0 documentation</a></p>
+<p>使用QGraph组织测试。</p>
+<p>文档写的什么史，根本看不懂。</p>
+<h3 id="QEMU-Fuzzing"><a href="#QEMU-Fuzzing" class="headerlink" title="QEMU-Fuzzing"></a>QEMU-Fuzzing</h3><p><a target="_blank" rel="noopener" href="https://qemu.readthedocs.io/en/latest/devel/fuzzing.html">Fuzzing — QEMU 8.0.0 documentation</a></p>
+<p>这个文档和相关的代码应该是Alexander写的，Morphuzz的一作，这篇paper应该也是来源于此。</p>
+<ol>
+<li>Fuzzer的使用</li>
+</ol>
+<p>编译：configure的时候–enable-fuzzing 之后 make qemu-fuzz-i386。</p>
+<p>编译出来之后，.&#x2F;qemu-fuzz-i386不带参数会显示可测的目标，添加–fuzz-target&#x3D;FUZZ_NAME参数开始测试。</p>
+<p>注意，因为有&#x2F;fuzz&#x2F;virtio_scsi_fuzz.c这个文件，才能有.&#x2F;qemu-fuzz-i386 –fuzz-target&#x3D;virtio-scsi-fuzz这个fuzzer。</p>
+<ol start="2">
+<li>Fuzzer的添加</li>
+</ol>
+<p>感觉和qtest一样的，用LLVM+libqtest&#x2F;libqos API去写，放到tests&#x2F;qtest&#x2F;fuzz&#x2F; 下面，在编译框架中加上。*这里的Fuzzer都是ad-hoc的，对每一个设备单独写。</p>
+<p>有一个特殊的generic-fuzz，通过给环境变量给参数从而Fuzz目标设备，比如这样给参数：<img src="C:\Users\jiangshao\AppData\Roaming\Typora\typora-user-images\image-20230721221541450.png" alt="image-20230721221541450"></p>
+<p><img src="C:\Users\jiangshao\AppData\Roaming\Typora\typora-user-images\image-20230721221548048.png" alt="image-20230721221548048"></p>
+<ol start="3">
+<li>0SS-Fuzz</li>
+</ol>
+<p>这下能看懂ViDeZZo的一些奇怪代码和编译指令了，原来是源自这里！</p>
+<p>因为generic-fuzz需要环境变量，为了不用环境变量直接是一个可执行文件的形式（可能是为了加入OSS-Fuzz吧），tests&#x2F;qtest&#x2F;fuzz&#x2F;generic_fuzz_configs.h这里面给了一些配置。build的方法也给出来了：<img src="C:\Users\jiangshao\AppData\Roaming\Typora\typora-user-images\image-20230721222012503.png" alt="image-20230721222012503"></p>
+<p>ViDeZZo直<a target="_blank" rel="noopener" href="https://github.com/HexHive/ViDeZZo/tree/master/videzzo_qemu">videzzo_qemu</a>&#x2F;videzzo_qemu.c应该是参考这里写的。</p>
+<ol start="4">
+<li>实现原理</li>
+</ol>
+<p>整体的原理在fuzz.c里面，相当于一个Framework。框架的入口点在这里：</p>
+<p><img src="C:\Users\jiangshao\AppData\Roaming\Typora\typora-user-images\image-20230721222633817.png" alt="image-20230721222633817"></p>
+<p>这里fuzz_target-&gt;fuzz()不出意外就是自定义的ad-hoc fuzzer或者那个generic-fuzzer提供的一个回调，用于对目标设备执行一次模糊行为。在实现模糊行为的过程中，Qemuphuzz（为什么我突然这么叫了？因为这里我去看了paper，发现标准的叫法应该是这个 ：）强烈谴责ViDeZZo作者的不严谨）首先将libfuzzer产生的字节码解码成IO操作，之后利用libqos和libqtest与设备进行交互。</p>
+<p><img src="C:\Users\jiangshao\AppData\Roaming\Typora\typora-user-images\image-20230721222309272.png" alt="image-20230721222309272"></p>
+<p>具体怎么交互的参考paper的section 4.4.2。 连上了，都连上了！</p>
+<p>这么看来，ViDeZZo几乎重写了Qemuphuzz的框架，基本的执行流也是一样的。</p>
+<h2 id="源码阅读"><a href="#源码阅读" class="headerlink" title="源码阅读"></a>源码阅读</h2><p>绕得有点远，应该回来了，我们的正题是ViDeZZo。但是因为想回去吃夜宵了，下次再看源码。</p>
+<p>待续。****</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Virtual-Device-Fuzzing/" rel="tag"># Virtual Device Fuzzing</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/07/17/IO%E8%AE%BE%E5%A4%87%E4%B8%8E%E9%A9%B1%E5%8A%A8%EF%BC%9A%E5%8E%9F%E7%90%86%E4%B8%8E%E4%BB%A3%E7%A0%81/" rel="prev" title="IO设备与驱动：原理与代码">
+      <i class="fa fa-chevron-left"></i> IO设备与驱动：原理与代码
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E6%9E%84%E5%BB%BA"><span class="nav-number">1.</span> <span class="nav-text">编译构建</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#QTest%E2%80%94%E2%80%94QEMU%E8%87%AA%E5%B8%A6%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95%E6%A1%86%E6%9E%B6"><span class="nav-number">2.</span> <span class="nav-text">QTest——QEMU自带单元测试框架</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">2.1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E6%96%B9%E5%BC%8F"><span class="nav-number">2.2.</span> <span class="nav-text">使用方式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Qtest-Driver-Framework"><span class="nav-number">2.3.</span> <span class="nav-text">Qtest Driver Framework</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#QEMU-Fuzzing"><span class="nav-number">2.4.</span> <span class="nav-text">QEMU-Fuzzing</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB"><span class="nav-number">3.</span> <span class="nav-text">源码阅读</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Shao Jiang</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">3</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Shao Jiang</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
